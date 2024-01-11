@@ -1,0 +1,61 @@
+import requests
+import mysql.connector
+
+# Obtener datos de la API de Jikan
+url = 'https://api.jikan.moe/v4/top/anime'
+data = requests.get(url)
+
+if data.status_code == 200:
+    data = data.json()
+    anime_data = []
+
+    for e in data['data']:
+        anime_info = (
+            e['title'],
+            e['source'],
+            e['episodes'],
+            e['duration'],
+            e['synopsis']
+        )
+        anime_data.append(anime_info)
+
+    # Conectar a la base de datos MySQL
+    conn = mysql.connector.connect(
+        host='localhost',
+        user='root',
+        password='',
+        database='python_consumo_api_e_insert'
+    )
+    cursor = conn.cursor()
+
+    # Crear la tabla si no existe
+    cursor.execute('''CREATE TABLE IF NOT EXISTS AnimeData (
+                    Title VARCHAR(255),
+                    Source VARCHAR(255),
+                    Episodes INT,
+                    Duration VARCHAR(255),
+                    Synopsis TEXT
+                    )''')
+
+    # Insertar datos en la tabla
+    insert_query = '''INSERT INTO AnimeData (Title, Source, Episodes, Duration, Synopsis)
+                    VALUES (%s, %s, %s, %s, %s)'''
+
+    cursor.executemany(insert_query, anime_data)
+    conn.commit()
+
+    print("Datos insertados correctamente en la base de datos.")
+
+    # Cerrar conexión a la base de datos
+    cursor.close()
+    conn.close()
+else:
+    print("No se pudo obtener la información de la API.")
+
+
+
+
+
+
+
+
